@@ -1,7 +1,20 @@
-# Tauri + React + Typescript
+# ⚡ RustySend
 
-This template should help get you started developing with Tauri, React and Typescript in Vite.
+**LAN file transfer tool built with Tauri & Rust.**
 
-## Recommended IDE Setup
+Currently a work in progress. Basic file transfer works.
 
-- [VS Code](https://code.visualstudio.com/) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
+## 🎯 What works now
+
+- Send single files between two devices on same network
+- Auto-discover devices via mDNS
+- Simple progress indicator
+
+## 🚀 Try it
+
+```bash
+git clone ...
+cd rustysend
+pnpm install
+pnpm tauri dev
+```
