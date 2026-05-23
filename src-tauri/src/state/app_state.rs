@@ -9,6 +9,7 @@ use crate::config::settings::Settings;
 pub struct AppState {
     pub settings: Arc<tokio::sync::RwLock<Settings>>,
     pub receiver: Arc<tokio::sync::Mutex<Option<ReceiverHandle>>>,
+    pub transfers: Arc<dashmap::DashMap<String, TransferSession>>,
 }
 
 impl AppState {
@@ -16,6 +17,7 @@ impl AppState {
         Self {
             settings: Arc::new(tokio::sync::RwLock::new(settings)),
             receiver: Arc::new(tokio::sync::Mutex::new(None)),
+            transfers: Arc::new(dashmap::DashMap::new()),
         }
     }
 }

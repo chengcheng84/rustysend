@@ -36,8 +36,51 @@ pub struct TransferAccept {
     pub transfer_id: String,
     pub accepted: bool,
     pub session_token: String,
-    pub data_stream_token: String,
+    #[serde(
+        serialize_with = "serialize_data_stream_token",
+        deserialize_with = "deserialize_data_stream_token"
+    )]
+    pub data_stream_token: [u8; 16],
     pub reject_reason: Option<String>,
+}
+
+fn serialize_data_stream_token<S: serde::Serializer>(
+    token: &[u8; 16],
+    s: S,
+) -> Result<S::Ok, S::Error> {
+    let hex_str = hex_encode(token);
+    s.serialize_str(&hex_str)
+}
+
+fn deserialize_data_stream_token<'de, D: serde::Deserializer<'de>>(
+    d: D,
+) -> Result<[u8; 16], D::Error> {
+    let hex_str: String = serde::Deserialize::deserialize(d)?;
+    hex_decode::<D>(&hex_str)
+}
+
+fn hex_encode(data: &[u8]) -> String {
+    let mut s = String::with_capacity(data.len() * 2);
+    for byte in data {
+        s.push_str(&format!("{:02x}", byte));
+    }
+    s
+}
+
+fn hex_decode<'de, D: serde::Deserializer<'de>>(hex: &str) -> Result<[u8; 16], D::Error> {
+    use serde::de;
+    if hex.len() != 32 {
+        return Err(de::Error::custom(format!(
+            "data_stream_token hex must be 32 chars, got {}",
+            hex.len()
+        )));
+    }
+    let mut buf = [0u8; 16];
+    for i in 0..16 {
+        buf[i] = u8::from_str_radix(&hex[i * 2..i * 2 + 2], 16)
+            .map_err(|e| de::Error::custom(format!("invalid hex at position {}: {}", i * 2, e)))?;
+    }
+    Ok(buf)
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -138,17 +181,16 @@ impl Message {
         }
         let json_str = std::str::from_utf8(&data[4..total_len])
             .map_err(|_| ProtocolError::InvalidUtf8)?;
-        let msg = Message::from_json(json_str)
-            .map_err(|e| ProtocolError::JsonError(e.to_string()))?;
+        let msg = Message::from_json(json_str)?;
         Ok((msg, total_len))
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug)]
 pub enum ProtocolError {
     InsufficientData,
     InvalidUtf8,
-    JsonError(String),
+    JsonError(serde_json::Error),
     VersionMismatch { client_versions: Vec<u32>, server_version: u32 },
 }
 
@@ -217,11 +259,18 @@ impl std::fmt::Display for ProtocolError {
     }
 }
 
-impl std::error::Error for ProtocolError {}
+impl std::error::Error for ProtocolError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            ProtocolError::JsonError(e) => Some(e),
+            _ => None,
+        }
+    }
+}
 
 impl From<serde_json::Error> for ProtocolError {
     fn from(e: serde_json::Error) -> Self {
-        ProtocolError::JsonError(e.to_string())
+        ProtocolError::JsonError(e)
     }
 }
 
@@ -253,7 +302,7 @@ mod tests {
             transfer_id: "550e8400-e29b-41d4-a716-446655440000".to_string(),
             accepted: true,
             session_token: "a1b2c3d4-e5f6-7890-abcd-ef1234567890".to_string(),
-            data_stream_token: "deadbeef1234567890abcdef12345678".to_string(),
+            data_stream_token: [0xde, 0xad, 0xbe, 0xef, 0x12, 0x34, 0x56, 0x78, 0x90, 0xab, 0xcd, 0xef, 0x12, 0x34, 0x56, 0x78],
             reject_reason: None,
         }
     }
@@ -495,7 +544,7 @@ mod tests {
     fn test_length_prefixed_insufficient_data() {
         let data = vec![0u8; 2];
         let result = Message::decode_length_prefixed(&data);
-        assert_eq!(result.unwrap_err(), ProtocolError::InsufficientData);
+        assert!(matches!(result.unwrap_err(), ProtocolError::InsufficientData));
     }
 
     #[test]
@@ -504,7 +553,7 @@ mod tests {
         data.extend_from_slice(&100u32.to_be_bytes());
         data.extend_from_slice(b"{\"type\":\"Ack\"}");
         let result = Message::decode_length_prefixed(&data);
-        assert_eq!(result.unwrap_err(), ProtocolError::InsufficientData);
+        assert!(matches!(result.unwrap_err(), ProtocolError::InsufficientData));
     }
 
     #[test]
@@ -513,7 +562,7 @@ mod tests {
         data.extend_from_slice(&4u32.to_be_bytes());
         data.extend_from_slice(&[0xFF, 0xFE, 0xFD, 0xFC]);
         let result = Message::decode_length_prefixed(&data);
-        assert_eq!(result.unwrap_err(), ProtocolError::InvalidUtf8);
+        assert!(matches!(result.unwrap_err(), ProtocolError::InvalidUtf8));
     }
 
     #[test]
@@ -546,7 +595,7 @@ mod tests {
             transfer_id: "550e8400-e29b-41d4-a716-446655440000".to_string(),
             accepted: false,
             session_token: "".to_string(),
-            data_stream_token: "".to_string(),
+            data_stream_token: [0u8; 16],
             reject_reason: Some("File exists".to_string()),
         };
         let json = serde_json::to_string(&accept).unwrap();
@@ -677,5 +726,61 @@ mod tests {
     #[test]
     fn test_protocol_quic_v1_constant() {
         assert_eq!(PROTOCOL_QUIC_V1, "rustysend-quic-v1");
+    }
+
+    #[test]
+    fn test_data_stream_token_hex_serialization() {
+        let accept = sample_transfer_accept();
+        let json = serde_json::to_string(&accept).unwrap();
+        // data_stream_token should be serialized as hex string
+        assert!(json.contains("deadbeef1234567890abcdef12345678"));
+    }
+
+    #[test]
+    fn test_data_stream_token_hex_deserialization() {
+        let json = r#"{
+            "transfer_id":"550e8400-e29b-41d4-a716-446655440000",
+            "accepted":true,
+            "session_token":"tok",
+            "data_stream_token":"0102030405060708090a0b0c0d0e0f10",
+            "reject_reason":null
+        }"#;
+        let accept: TransferAccept = serde_json::from_str(json).unwrap();
+        assert_eq!(accept.data_stream_token, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]);
+    }
+
+    #[test]
+    fn test_data_stream_token_invalid_hex() {
+        let json = r#"{
+            "transfer_id":"t1",
+            "accepted":true,
+            "session_token":"tok",
+            "data_stream_token":"zz",
+            "reject_reason":null
+        }"#;
+        let result = serde_json::from_str::<TransferAccept>(json);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_data_stream_token_wrong_length() {
+        let json = r#"{
+            "transfer_id":"t1",
+            "accepted":true,
+            "session_token":"tok",
+            "data_stream_token":"01020304",
+            "reject_reason":null
+        }"#;
+        let result = serde_json::from_str::<TransferAccept>(json);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_hex_encode_decode_roundtrip() {
+        let token: [u8; 16] = [0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff];
+        let hex = hex_encode(&token);
+        assert_eq!(hex, "00112233445566778899aabbccddeeff");
+        let decoded = hex_decode::<serde_json::value::Value>(&hex).unwrap();
+        assert_eq!(decoded, token);
     }
 }

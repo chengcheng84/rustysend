@@ -24,7 +24,7 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 
 # QUIC
-quinn = "0.11"
+quinn = "0.11.9"
 rustls = { version = "0.23", default-features = false, features = ["ring"] }
 
 # Certificate generation
@@ -37,7 +37,7 @@ tokio = { version = "1", features = ["full"] }
 thiserror = "1"
 
 # File system
-dirs = "5"
+dirs = "6"
 hostname = "0.4"
 
 # WebPKI roots for TLS
@@ -48,6 +48,9 @@ ring = "0.17"
 
 # PEM parsing for certificate persistence
 rustls-pemfile = "2"
+
+# Concurrent hashmap for transfer sessions
+dashmap = "6"
 
 [dev-dependencies]
 tempfile = "3"
