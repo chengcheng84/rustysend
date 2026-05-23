@@ -3,7 +3,6 @@ import { AlertCircle, RefreshCw } from "lucide-react";
 
 interface Props {
   children: ReactNode;
-  fallback?: ReactNode;
 }
 
 interface State {
@@ -25,33 +24,30 @@ export class ErrorBoundary extends Component<Props, State> {
     console.error("ErrorBoundary caught an error:", error, errorInfo);
   }
 
-  handleReset = () => {
-    this.setState({ hasError: false, error: null });
+  handleReload = () => {
+    // 重新加载整个应用以恢复状态
+    window.location.reload();
   };
 
   render() {
     if (this.state.hasError) {
-      if (this.props.fallback) {
-        return this.props.fallback;
-      }
-
       return (
-        <div className="flex h-full flex-col items-center justify-center p-6">
+        <div className="flex h-screen w-full flex-col items-center justify-center p-6 bg-background">
           <div className="flex h-20 w-20 items-center justify-center rounded-full bg-destructive/10">
             <AlertCircle className="h-10 w-10 text-destructive" />
           </div>
           <h1 className="mt-6 text-xl font-semibold text-foreground">
-            出错了
+            应用发生错误
           </h1>
           <p className="mt-2 max-w-md text-center text-sm text-muted-foreground">
-            {this.state.error?.message || "应用发生未知错误"}
+            {this.state.error?.message || "出现未知错误，请尝试刷新页面"}
           </p>
           <button
-            onClick={this.handleReset}
-            className="mt-6 inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+            onClick={this.handleReload}
+            className="mt-6 inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
           >
             <RefreshCw className="h-4 w-4" />
-            重试
+            刷新页面
           </button>
         </div>
       );

@@ -15,9 +15,7 @@ function App() {
             <div className="flex h-screen w-full overflow-hidden">
               <AppSidebar />
               <main className="flex-1 flex flex-col bg-background overflow-auto">
-                <ErrorBoundary>
-                  <AppRoutes />
-                </ErrorBoundary>
+                <AppRoutes />
               </main>
             </div>
           </SidebarProvider>
