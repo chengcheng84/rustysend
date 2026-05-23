@@ -22,3 +22,32 @@ tauri = { version = "2", features = [] }
 tauri-plugin-opener = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+
+# QUIC
+quinn = "0.11"
+rustls = { version = "0.23", default-features = false, features = ["ring"] }
+
+# Certificate generation
+rcgen = "0.13"
+
+# Async runtime
+tokio = { version = "1", features = ["full"] }
+
+# Error handling
+thiserror = "1"
+
+# File system
+dirs = "5"
+hostname = "0.4"
+
+# WebPKI roots for TLS
+webpki-roots = "0.26"
+
+# Crypto
+ring = "0.17"
+
+# PEM parsing for certificate persistence
+rustls-pemfile = "2"
+
+[dev-dependencies]
+tempfile = "3"
