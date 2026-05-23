@@ -960,7 +960,7 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 
 # 文件系统
-dirs = "5"
+dirs-next = "5"
 fs2 = "0.4"           # 磁盘空间检查（精确查询路径所在分区的可用空间）
 
 # hex 编码（data_stream_token 序列化）
@@ -2345,7 +2345,7 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 
 # 文件系统
-dirs = "5"
+dirs-next = "5"
 fs2 = "0.4"           # 磁盘空间检查（精确查询路径所在分区的可用空间）
 
 # hex 编码（data_stream_token 序列化）
