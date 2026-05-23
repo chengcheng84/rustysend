@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Switch } from "@/components/ui/switch";
 
 export function SettingsPage() {
   const [autoReceive, setAutoReceive] = useState(true);
@@ -19,18 +20,10 @@ export function SettingsPage() {
                 自动接受来自信任设备的文件
               </p>
             </div>
-            <button
-              onClick={() => setAutoReceive(!autoReceive)}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                autoReceive ? "bg-primary" : "bg-secondary"
-              }`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  autoReceive ? "translate-x-6" : "translate-x-1"
-                }`}
-              />
-            </button>
+            <Switch
+              checked={autoReceive}
+              onCheckedChange={setAutoReceive}
+            />
           </div>
           <div className="flex items-center justify-between py-2">
             <div>

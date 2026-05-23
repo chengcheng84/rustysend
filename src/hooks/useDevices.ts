@@ -33,7 +33,8 @@ export function useDevices() {
         await new Promise((resolve) => setTimeout(resolve, 500));
         setDevices(mockDevices);
       } catch (err) {
-        setError(err instanceof Error ? err : new Error("Failed to fetch devices"));
+        const error = err instanceof Error ? err : new Error(String(err));
+        setError(error);
       } finally {
         setIsLoading(false);
       }
