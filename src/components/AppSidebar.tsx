@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import {
   Sidebar,
   SidebarContent,
@@ -8,22 +8,22 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { Monitor, ArrowLeftRight, Settings, Circle } from "lucide-react";
+import { Circle } from "lucide-react";
 import { useState } from "react";
-
-const navItems = [
-  { id: "devices", path: "/devices", icon: Monitor, label: "设备" },
-  { id: "transfer", path: "/transfer", icon: ArrowLeftRight, label: "传输" },
-  { id: "settings", path: "/settings", icon: Settings, label: "设置" },
-];
+import { useNavigation } from "@/hooks/useNavigation";
 
 export function AppSidebar() {
   const [isOnline] = useState(true);
+  const navItems = useNavigation();
+  const location = useLocation();
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
-      <SidebarHeader className="flex items-center justify-center py-3">
-        <span className="mt-2 text-md font-semibold text-sidebar-foreground group-data-[collapsible=icon]:hidden">
+      <SidebarHeader className="flex items-center justify-center py-6">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-bold text-lg shadow-lg group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:w-8 group-data-[collapsible=icon]:text-sm transition-all">
+          R
+        </div>
+        <span className="mt-2 text-sm font-semibold text-sidebar-foreground group-data-[collapsible=icon]:hidden">
           RustySend
         </span>
       </SidebarHeader>
